@@ -1,4 +1,4 @@
-#include "query5.hpp"
+#include "query5.cpp"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -19,6 +19,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "Failed to parse command line arguments." << std::endl;
         return 1;
     }
+    log(LogLevel::INFO, "Parsed command line arguments successfully.");
 
     std::vector<std::map<std::string, std::string>> customer_data, orders_data, lineitem_data, supplier_data, nation_data, region_data;
 
