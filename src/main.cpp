@@ -16,17 +16,28 @@ int main(int argc, char* argv[]) {
     int num_threads;
 
     if (!parseArgs(argc, argv, r_name, start_date, end_date, num_threads, table_path, result_path)) {
+        log(LogLevel::ERROR, "Failed to parse command line arguments.");
         std::cerr << "Failed to parse command line arguments." << std::endl;
         return 1;
     }
-    log(LogLevel::INFO, "Parsed command line arguments successfully.");
+    std::ostringstream oss;
+    oss << "Parsed command line arguments successfully:\n"
+        << "  Region Name   : " << r_name << "\n"
+        << "  Start Date    : " << start_date << "\n"
+        << "  End Date      : " << end_date << "\n"
+        << "  Num Threads   : " << num_threads << "\n"
+        << "  Table Path    : " << table_path << "\n"
+        << "  Result Path   : " << result_path;
 
+    log(LogLevel::INFO, oss.str());
+    
     std::vector<std::map<std::string, std::string>> customer_data, orders_data, lineitem_data, supplier_data, nation_data, region_data;
 
     if (!readTPCHData(table_path, customer_data, orders_data, lineitem_data, supplier_data, nation_data, region_data)) {
-        std::cerr << "Failed to read TPCH data." << std::endl;
+        log(LogLevel::ERROR, "Failed to read TPCH data.");
         return 1;
     }
+    log(LogLevel::INFO, "Read data from TPCH tables successfully.");
 
     std::map<std::string, double> results;
 

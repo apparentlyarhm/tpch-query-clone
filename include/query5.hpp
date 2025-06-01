@@ -22,4 +22,10 @@ bool outputResults(const std::string& result_path, const std::map<std::string, d
 // Logging function
 void log(LogLevel level, const std::string& message);
 
+// Helper function to read a table from a file
+bool readTable(const std::string& file_path, const std::vector<std::string>& columns, std::vector<std::map<std::string, std::string>>& data);
+
+// Helper function to split a string by a delimiter
+std::vector<std::string> split(const std::string& s, char delimiter);
+
 #endif // QUERY5_HPP 

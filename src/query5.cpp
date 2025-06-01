@@ -8,12 +8,80 @@
 #include <unordered_map>
 #include <iomanip>
 #include <chrono>
+#include <cerrno>
+#include <cstring> 
 
 using namespace std;
 
+// Vector of column names for each TPCH table
+const vector<string> CUSTOMER_COLS = {
+    "c_custkey",
+    "c_name",
+    "c_address",
+    "c_nationkey",
+    "c_phone", 
+    "c_acctbal", 
+    "c_mktsegment", 
+    "c_comment"
+};
+
+const vector<string> ORDERS_COLS = {
+    "o_orderkey",
+    "o_custkey",
+    "o_orderstatus",
+    "o_totalprice",
+    "o_orderdate",
+    "o_orderpriority",
+    "o_clerk",
+    "o_shippriority",
+    "o_comment"
+};
+
+const vector<string> LINEITEM_COLS = {
+    "l_orderkey",
+    "l_partkey",
+    "l_suppkey",
+    "l_linenumber",
+    "l_quantity",
+    "l_extendedprice",
+    "l_discount",
+    "l_tax",
+    "l_returnflag",
+    "l_linestatus",
+    "l_shipdate",
+    "l_commitdate",
+    "l_receiptdate",
+    "l_shipinstruct",
+    "l_shipmode",
+    "l_comment"
+};
+
+const vector<string> SUPPLIER_COLS = {
+    "s_suppkey",
+    "s_name",
+    "s_address",
+    "s_nationkey",
+    "s_phone",
+    "s_acctbal",
+    "s_comment"
+};
+
+const vector<string> NATION_COLS = {
+    "n_nationkey",
+    "n_name",
+    "n_regionkey",
+    "n_comment"
+};
+
+const vector<string> REGION_COLS = {
+    "r_regionkey",
+    "r_name",
+    "r_comment"
+};
+
+
 // Function to parse command line arguments
 bool parseArgs(int argc, char* argv[], string& r_name, string& start_date, string& end_date, int& num_threads, string& table_path, string& result_path) {
-    // TODO: Implement command line argument parsing
     // Example: --r_name ASIA --start_date 1994-01-01 --end_date 1995-01-01 --threads 4 --table_path /path/to/tables --result_path /path/to/results
     unordered_map<string, string> allArgs;
 
@@ -46,11 +114,21 @@ bool parseArgs(int argc, char* argv[], string& r_name, string& start_date, strin
     return true;
 }
 
+// Each .tbl file:
+// Is pipe (|) delimited
+// Does not have a header row
+// Each row ends with a | at the end
+
 // Function to read TPCH data from the specified paths
 bool readTPCHData(const string& table_path, vector<map<string, string>>& customer_data, vector<map<string, string>>& orders_data, vector<map<string, string>>& lineitem_data, vector<map<string, string>>& supplier_data, vector<map<string, string>>& nation_data, vector<map<string, string>>& region_data) {
-    // TODO: Implement reading TPCH data from files
-    return false;
-}
+    // Assuming that table_path is the directory containing the TPCH data files
+    return readTable(table_path + "\\customer.tbl", CUSTOMER_COLS, customer_data) &&
+           readTable(table_path + "\\orders.tbl", ORDERS_COLS, orders_data) &&
+           readTable(table_path + "\\lineitem.tbl", LINEITEM_COLS, lineitem_data) &&
+           readTable(table_path + "\\supplier.tbl", SUPPLIER_COLS, supplier_data) &&
+           readTable(table_path + "\\nation.tbl", NATION_COLS, nation_data) &&
+           readTable(table_path + "\\region.tbl", REGION_COLS, region_data);
+        }
 
 // Function to execute TPCH Query 5 using multithreading
 bool executeQuery5(const string& r_name, const string& start_date, const string& end_date, int num_threads, const vector<map<string, string>>& customer_data, const vector<map<string, string>>& orders_data, const vector<map<string, string>>& lineitem_data, const vector<map<string, string>>& supplier_data, const vector<map<string, string>>& nation_data, const vector<map<string, string>>& region_data, map<string, double>& results) {
@@ -80,4 +158,48 @@ void log(LogLevel level, const std::string& message) {
 
     std::cout << "[" << std::put_time(&tm, "%Y-%m-%d %H:%M:%S")
               << "] [" << level_str << "] " << message << std::endl;
+}
+
+// Helper: split a string by delimiter
+vector<string> split(const string& s, char delimiter) {
+    vector<string> tokens;
+    string token;
+    istringstream tokenStream(s);
+    while (getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+// Helper: read a single TPCH table file
+bool readTable(const string& file_path, const vector<string>& columns, vector<map<string, string>>& data) {
+    ifstream file(file_path);
+    if (!file.is_open()) {
+        cerr << "Error: Could not open file " << file_path
+             << " (" << std::strerror(errno) << ")" << endl;
+        return false;
+    }
+
+    string line;
+    while (getline(file, line)) {
+        // remove trailing pipe if it exists
+        if (!line.empty() && line.back() == '|') {
+            line.pop_back();
+        }
+
+        vector<string> values = split(line, '|');
+        if (values.size() != columns.size()) {
+            cerr << "Warning: Column size mismatch in " << file_path << endl;
+            continue;
+        }
+
+        map<string, string> row;
+        for (size_t i = 0; i < columns.size(); ++i) {
+            row[columns[i]] = values[i];
+        }
+        data.push_back(row);
+    }
+
+    file.close();
+    return true;
 }

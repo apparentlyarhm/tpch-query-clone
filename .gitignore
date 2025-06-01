@@ -5,3 +5,6 @@
 *.log
 build/
 .vscode/
+
+# Ignore DBGEN output and data files
+dbgen-out/ 

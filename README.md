@@ -2,6 +2,14 @@
 
 dont mind me bro
 
+1/6/25 [23:32] -- painfully learnt not to mess around with cmake/make binaries on windows, on WSL it just works out of the box. i was able to compile dbgen and generate sample data using 
+```bash
+./dbgen -s 2
+```
+
+Original Readme below: 
+<hr>
+
 # TPCH Query 5 C++ Multithreading Project
 
 ## Overview
@@ -24,7 +32,7 @@ Task is to implement TPCH Query 5 using C++ and multithreading.
 >**Note : Submissions without above 4 details would be considered as incomplete** 
 
 ## Query 5
-```
+```sql
 select 
 n_name, 
 sum(l_extendedprice * (1 - l_discount)) as revenue 
