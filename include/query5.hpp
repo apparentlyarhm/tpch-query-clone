@@ -5,6 +5,8 @@
 #include <vector>
 #include <map>
 
+enum class LogLevel { INFO, WARNING, ERROR };
+
 // Function to parse command line arguments
 bool parseArgs(int argc, char* argv[], std::string& r_name, std::string& start_date, std::string& end_date, int& num_threads, std::string& table_path, std::string& result_path);
 
@@ -16,5 +18,8 @@ bool executeQuery5(const std::string& r_name, const std::string& start_date, con
 
 // Function to output results to the specified path
 bool outputResults(const std::string& result_path, const std::map<std::string, double>& results);
+
+// Logging function
+void log(LogLevel level, const std::string& message);
 
 #endif // QUERY5_HPP 

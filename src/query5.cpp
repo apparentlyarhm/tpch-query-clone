@@ -1,5 +1,4 @@
-#include <vector>
-#include <map>
+#include "query5.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -9,8 +8,6 @@
 #include <unordered_map>
 #include <iomanip>
 #include <chrono>
-
-enum class LogLevel { INFO, WARNING, ERROR };
 
 using namespace std;
 
