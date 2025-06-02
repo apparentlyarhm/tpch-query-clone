@@ -2,9 +2,22 @@
 
 dont mind me bro
 
-1/6/25 [23:32] -- painfully learnt not to mess around with cmake/make binaries on windows, on WSL it just works out of the box (after installing `build-essentials` using apt). i was able to compile dbgen and generate sample data using 
+1. 1/6/25 [23:32] -- painfully learnt not to mess around with cmake/make binaries on windows, on WSL it just works out of the box (after installing `build-essentials` using apt). i was able to compile dbgen and generate sample data using 
 ```bash
 ./dbgen -s 2
+```
+2. 2/6/25 [14:08] -- i should have configured WSL only, anyways, using msys2, i was able to get the `mutex` and `thread` libraries working on windows (which was missing in minGW)
+Also, beacuse of limited time, I could not finish the indexes stuff, so in case of larger db, I will simply read first 30K lines. This will result in incorrect results -- I am aware of this. Make sure under `CMake kits` You have:
+
+```json
+  {
+    "name": "GCC 13.1.0 MinGW -- USE THIS BRO",
+    "compilers": {
+      "C": "C:\\msys64\\ucrt64\\bin\\gcc.exe",
+      "CXX": "C:\\msys64\\ucrt64\\bin\\g++.exe"
+    },
+    "isTrusted": true
+  },
 ```
 
 Original Readme below: 

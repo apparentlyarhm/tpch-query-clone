@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 
     if (!parseArgs(argc, argv, r_name, start_date, end_date, num_threads, table_path, result_path)) {
         log(LogLevel::ERROR, "Failed to parse command line arguments.");
-        std::cerr << "Failed to parse command line arguments." << std::endl;
+        std::cerr << "Failed to pParse command line arguments." << std::endl;
         return 1;
     }
     std::ostringstream oss;
@@ -40,13 +40,14 @@ int main(int argc, char* argv[]) {
     log(LogLevel::INFO, "Read data from TPCH tables successfully.");
 
     std::map<std::string, double> results;
+    std::vector<std::pair<std::string, double>> sorted_results;
 
-    if (!executeQuery5(r_name, start_date, end_date, num_threads, customer_data, orders_data, lineitem_data, supplier_data, nation_data, region_data, results)) {
+    if (!executeQuery5(r_name, start_date, end_date, num_threads, customer_data, orders_data, lineitem_data, supplier_data, nation_data, region_data, results, sorted_results)) {
         std::cerr << "Failed to execute TPCH Query 5." << std::endl;
         return 1;
     }
 
-    if (!outputResults(result_path, results)) {
+    if (!outputResults(result_path, sorted_results)) {
         std::cerr << "Failed to output results." << std::endl;
         return 1;
     }
