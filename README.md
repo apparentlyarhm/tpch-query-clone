@@ -2,7 +2,7 @@
 
 dont mind me bro
 
-1/6/25 [23:32] -- painfully learnt not to mess around with cmake/make binaries on windows, on WSL it just works out of the box. i was able to compile dbgen and generate sample data using 
+1/6/25 [23:32] -- painfully learnt not to mess around with cmake/make binaries on windows, on WSL it just works out of the box (after installing `build-essentials` using apt). i was able to compile dbgen and generate sample data using 
 ```bash
 ./dbgen -s 2
 ```
