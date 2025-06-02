@@ -42,10 +42,16 @@ int main(int argc, char* argv[]) {
     std::map<std::string, double> results;
     std::vector<std::pair<std::string, double>> sorted_results;
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     if (!executeQuery5(r_name, start_date, end_date, num_threads, customer_data, orders_data, lineitem_data, supplier_data, nation_data, region_data, results, sorted_results)) {
         std::cerr << "Failed to execute TPCH Query 5." << std::endl;
         return 1;
     }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    log(LogLevel::INFO, "TPCH Query 5 executed in " + std::to_string(duration_ms) + " ms");
 
     if (!outputResults(result_path, sorted_results)) {
         std::cerr << "Failed to output results." << std::endl;
