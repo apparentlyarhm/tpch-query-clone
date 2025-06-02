@@ -7,6 +7,73 @@
 
 enum class LogLevel { INFO, WARNING, ERROR };
 
+// Vector of column names for each TPCH table
+const std::vector<std::string> CUSTOMER_COLS = {
+    "c_custkey",
+    "c_name",
+    "c_address",
+    "c_nationkey",
+    "c_phone", 
+    "c_acctbal", 
+    "c_mktsegment", 
+    "c_comment"
+};
+
+const std::vector<std::string> ORDERS_COLS = {
+    "o_orderkey",
+    "o_custkey",
+    "o_orderstatus",
+    "o_totalprice",
+    "o_orderdate",
+    "o_orderpriority",
+    "o_clerk",
+    "o_shippriority",
+    "o_comment"
+};
+
+const std::vector<std::string> LINEITEM_COLS = {
+    "l_orderkey",
+    "l_partkey",
+    "l_suppkey",
+    "l_linenumber",
+    "l_quantity",
+    "l_extendedprice",
+    "l_discount",
+    "l_tax",
+    "l_returnflag",
+    "l_linestatus",
+    "l_shipdate",
+    "l_commitdate",
+    "l_receiptdate",
+    "l_shipinstruct",
+    "l_shipmode",
+    "l_comment"
+};
+
+const std::vector<std::string> SUPPLIER_COLS = {
+    "s_suppkey",
+    "s_name",
+    "s_address",
+    "s_nationkey",
+    "s_phone",
+    "s_acctbal",
+    "s_comment"
+};
+
+const std::vector<std::string> NATION_COLS = {
+    "n_nationkey",
+    "n_name",
+    "n_regionkey",
+    "n_comment"
+};
+
+const std::vector<std::string> REGION_COLS = {
+    "r_regionkey",
+    "r_name",
+    "r_comment"
+};
+
+
 // Function to parse command line arguments
 bool parseArgs(int argc, char* argv[], std::string& r_name, std::string& start_date, std::string& end_date, int& num_threads, std::string& table_path, std::string& result_path);
 

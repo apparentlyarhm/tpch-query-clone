@@ -13,73 +13,6 @@
 
 using namespace std;
 
-// Vector of column names for each TPCH table
-const vector<string> CUSTOMER_COLS = {
-    "c_custkey",
-    "c_name",
-    "c_address",
-    "c_nationkey",
-    "c_phone", 
-    "c_acctbal", 
-    "c_mktsegment", 
-    "c_comment"
-};
-
-const vector<string> ORDERS_COLS = {
-    "o_orderkey",
-    "o_custkey",
-    "o_orderstatus",
-    "o_totalprice",
-    "o_orderdate",
-    "o_orderpriority",
-    "o_clerk",
-    "o_shippriority",
-    "o_comment"
-};
-
-const vector<string> LINEITEM_COLS = {
-    "l_orderkey",
-    "l_partkey",
-    "l_suppkey",
-    "l_linenumber",
-    "l_quantity",
-    "l_extendedprice",
-    "l_discount",
-    "l_tax",
-    "l_returnflag",
-    "l_linestatus",
-    "l_shipdate",
-    "l_commitdate",
-    "l_receiptdate",
-    "l_shipinstruct",
-    "l_shipmode",
-    "l_comment"
-};
-
-const vector<string> SUPPLIER_COLS = {
-    "s_suppkey",
-    "s_name",
-    "s_address",
-    "s_nationkey",
-    "s_phone",
-    "s_acctbal",
-    "s_comment"
-};
-
-const vector<string> NATION_COLS = {
-    "n_nationkey",
-    "n_name",
-    "n_regionkey",
-    "n_comment"
-};
-
-const vector<string> REGION_COLS = {
-    "r_regionkey",
-    "r_name",
-    "r_comment"
-};
-
-
 // Function to parse command line arguments
 bool parseArgs(int argc, char* argv[], string& r_name, string& start_date, string& end_date, int& num_threads, string& table_path, string& result_path) {
     // Example: --r_name ASIA --start_date 1994-01-01 --end_date 1995-01-01 --threads 4 --table_path /path/to/tables --result_path /path/to/results
@@ -173,30 +106,43 @@ vector<string> split(const string& s, char delimiter) {
 
 // Helper: read a single TPCH table file
 bool readTable(const string& file_path, const vector<string>& columns, vector<map<string, string>>& data) {
-    ifstream file(file_path);
+    size_t max_size_bytes = 10 * 1024 * 1024;
+
+    std::ifstream file(file_path, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
-        cerr << "Error: Could not open file " << file_path
-             << " (" << std::strerror(errno) << ")" << endl;
+        std::cerr << "Error: Could not open file " << file_path
+                  << " (" << std::strerror(errno) << ")" << std::endl;
         return false;
     }
 
-    string line;
-    while (getline(file, line)) {
+    std::streamsize file_size = file.tellg();
+    file.seekg(0, std::ios::beg); // reset position for reading
+
+    if (file_size > static_cast<std::streamsize>(max_size_bytes)) {
+        log(LogLevel::WARNING, "File too large to load into memory: " + file_path +
+                               " (" + std::to_string(file_size) + " bytes)");
+        file.close();
+        return true; // large file exists, we won't load it now
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
         // remove trailing pipe if it exists
         if (!line.empty() && line.back() == '|') {
             line.pop_back();
         }
 
-        vector<string> values = split(line, '|');
+        std::vector<std::string> values = split(line, '|');
         if (values.size() != columns.size()) {
-            cerr << "Warning: Column size mismatch in " << file_path << endl;
+            std::cerr << "Warning: Column size mismatch in " << file_path << std::endl;
             continue;
         }
 
-        map<string, string> row;
+        std::map<std::string, std::string> row;
         for (size_t i = 0; i < columns.size(); ++i) {
             row[columns[i]] = values[i];
         }
+
         data.push_back(row);
     }
 
