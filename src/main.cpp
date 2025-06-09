@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <thread>
-#include <mutex>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
@@ -31,7 +30,13 @@ int main(int argc, char* argv[]) {
 
     log(LogLevel::INFO, oss.str());
     
-    std::vector<std::map<std::string, std::string>> customer_data, orders_data, lineitem_data, supplier_data, nation_data, region_data;
+    std::vector<std::vector<std::string>> customer_data, orders_data, lineitem_data, supplier_data, nation_data, region_data;
+    std::unordered_map<std::string, std::size_t> regionIndex, nationIndex, customerIndex, ordersIndex, lineitemIndex, supplierIndex;
+
+    if (!populateAllIndexMaps(regionIndex, nationIndex, supplierIndex, customerIndex, ordersIndex, lineitemIndex)) {
+        log(LogLevel::ERROR, "Failed to populate index maps for TPCH tables.");
+        return 1;
+    }
 
     if (!readTPCHData(table_path, customer_data, orders_data, lineitem_data, supplier_data, nation_data, region_data)) {
         log(LogLevel::ERROR, "Failed to read TPCH data.");
@@ -44,7 +49,7 @@ int main(int argc, char* argv[]) {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    if (!executeQuery5(r_name, start_date, end_date, num_threads, customer_data, orders_data, lineitem_data, supplier_data, nation_data, region_data, results, sorted_results)) {
+    if (!executeQuery5(r_name, start_date, end_date, num_threads, customer_data, orders_data, lineitem_data, supplier_data, nation_data, region_data, customerIndex, ordersIndex, lineitemIndex, supplierIndex, nationIndex, regionIndex, results, sorted_results)) {
         std::cerr << "Failed to execute TPCH Query 5." << std::endl;
         return 1;
     }

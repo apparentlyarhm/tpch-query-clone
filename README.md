@@ -19,6 +19,8 @@ Also, beacuse of limited time, I could not finish the indexes stuff, so in case 
     "isTrusted": true
   },
 ```
+3. 10/6/25 [00:34] -- just by shifting to `vector<string>` instead of the given `map<string, string>` allowed the entire data to be fed into memory. Since the column names are supposed to be constant, we can improve the memory footprint from the original implementation (non running vs ~10Gigs). its still very large so the only correct way is streaming. If we were using Java or Rust here, its iterators would have proved useful here. The answer is still wrong but at least it all loads. 
+<b>I did, however, changed the function signatures and therefore the intitial state the assingment was given</b>
 
 Original Readme below: 
 <hr>

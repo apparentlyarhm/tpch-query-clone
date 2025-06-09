@@ -54,7 +54,7 @@ bool parseArgs(int argc, char* argv[], string& r_name, string& start_date, strin
 // Each row ends with a | at the end
 
 // Function to read TPCH data from the specified paths
-bool readTPCHData(const string& table_path, vector<map<string, string>>& customer_data, vector<map<string, string>>& orders_data, vector<map<string, string>>& lineitem_data, vector<map<string, string>>& supplier_data, vector<map<string, string>>& nation_data, vector<map<string, string>>& region_data) {
+bool readTPCHData(const string& table_path, vector<vector<std::string>>& customer_data, vector<vector<std::string>>& orders_data, vector<vector<std::string>>& lineitem_data, vector<vector<std::string>>& supplier_data,vector<vector<std::string>>& nation_data, vector<vector<std::string>>& region_data) {
     // Assuming that table_path is the directory containing the TPCH data files
     return readTable(table_path + "/customer.tbl", CUSTOMER_COLS, customer_data) &&
            readTable(table_path + "/orders.tbl", ORDERS_COLS, orders_data) &&
@@ -65,14 +65,41 @@ bool readTPCHData(const string& table_path, vector<map<string, string>>& custome
         }
 
 // Function to execute TPCH Query 5 using multithreading
-bool executeQuery5(const string& r_name, const string& start_date, const string& end_date, int num_threads, const vector<map<string, string>>& customer_data, const vector<map<string, string>>& orders_data, const vector<map<string, string>>& lineitem_data, const vector<map<string, string>>& supplier_data, const vector<map<string, string>>& nation_data, const vector<map<string, string>>& region_data, map<string, double>& results, vector<pair<string, double>>& sorted_results) {
+bool executeQuery5(
+    const std::string& r_name,
+    const std::string& start_date,
+    const std::string& end_date,
+    int num_threads,
+    const std::vector<std::vector<std::string>>& customer_data,
+    const std::vector<std::vector<std::string>>& orders_data,
+    const std::vector<std::vector<std::string>>& lineitem_data,
+    const std::vector<std::vector<std::string>>& supplier_data,
+    const std::vector<std::vector<std::string>>& nation_data,
+    const std::vector<std::vector<std::string>>& region_data,
+    const std::unordered_map<std::string, size_t>& customerIndex,
+    const std::unordered_map<std::string, size_t>& ordersIndex,
+    const std::unordered_map<std::string, size_t>& lineitemIndex,
+    const std::unordered_map<std::string, size_t>& supplierIndex,
+    const std::unordered_map<std::string, size_t>& nationIndex,
+    const std::unordered_map<std::string, size_t>& regionIndex,
+    std::map<std::string, double>& results,
+    std::vector<std::pair<std::string, double>>& sorted_results
+) {    
     log(LogLevel::INFO, "Starting execution of TPCH Query 5");
+
+    for (const auto& col : REGION_COLS) {
+        std::cout << "REGION_COL: [" << col << "]\n";
+    }
+
+    for (const auto& [key, val] : regionIndex) {
+        std::cout << "regionIndex[" << key << "] = " << val << "\n";
+    }
 
     // r_name = <region>
     string target_region_key;
     for (const auto& row : region_data) {
-        if (row.at("r_name") == r_name) {
-            target_region_key = row.at("r_regionkey");
+        if (row.at(regionIndex.at("r_name")) == r_name) {
+            target_region_key = row.at(regionIndex.at("r_regionkey"));
             log(LogLevel::INFO, "Matched region: " + r_name + " -> regionkey: " + target_region_key);
             break;
         }
@@ -86,9 +113,11 @@ bool executeQuery5(const string& r_name, const string& start_date, const string&
     unordered_map<string, string> nation_name_by_key;
     unordered_set<string> valid_nation_keys;
     for (const auto& row : nation_data) {
-        if (row.at("n_regionkey") == target_region_key) {
-            valid_nation_keys.insert(row.at("n_nationkey"));
-            nation_name_by_key[row.at("n_nationkey")] = row.at("n_name");
+        if (row.at(nationIndex.at("n_regionkey")) == target_region_key) {
+            string nation_key = row.at(nationIndex.at("n_nationkey"));
+            
+            valid_nation_keys.insert(nation_key);
+            nation_name_by_key[nation_key] = row.at(nationIndex.at("n_name"));
         }
     }
     log(LogLevel::INFO, "Valid nations in region: " + to_string(valid_nation_keys.size()));
@@ -97,9 +126,11 @@ bool executeQuery5(const string& r_name, const string& start_date, const string&
     unordered_set<string> valid_supp_keys;
     unordered_map<string, string> suppkey_to_nationkey;
     for (const auto& row : supplier_data) {
-        if (valid_nation_keys.count(row.at("s_nationkey"))) {
-            valid_supp_keys.insert(row.at("s_suppkey"));
-            suppkey_to_nationkey[row.at("s_suppkey")] = row.at("s_nationkey");
+        const std::string& nationkey = row.at(supplierIndex.at("s_nationkey"));
+        if (valid_nation_keys.count(nationkey)) {
+            const std::string& suppkey = row.at(supplierIndex.at("s_suppkey"));
+            valid_supp_keys.insert(suppkey);
+            suppkey_to_nationkey[suppkey] = nationkey;
         }
     }
     log(LogLevel::INFO, "Suppliers from valid nations: " + to_string(valid_supp_keys.size()));
@@ -107,8 +138,10 @@ bool executeQuery5(const string& r_name, const string& start_date, const string&
     // Join customer on c_nationkey = s_nationkey
     unordered_map<string, string> custkey_to_nationkey;
     for (const auto& row : customer_data) {
-        if (valid_nation_keys.count(row.at("c_nationkey"))) {
-            custkey_to_nationkey[row.at("c_custkey")] = row.at("c_nationkey");
+        const std::string& nationkey = row.at(customerIndex.at("c_nationkey"));
+        if (valid_nation_keys.count(nationkey)) {
+            const std::string& custkey = row.at(customerIndex.at("c_custkey"));
+            custkey_to_nationkey[custkey] = nationkey;
         }
     }
     log(LogLevel::INFO, "Customers from valid nations: " + to_string(custkey_to_nationkey.size()));
@@ -122,9 +155,10 @@ bool executeQuery5(const string& r_name, const string& start_date, const string&
 
     int matched_orders = 0;
     for (const auto& row : orders_data) {
-        string custkey = row.at("o_custkey");
-        string orderkey = row.at("o_orderkey");
-        string orderdate = row.at("o_orderdate");
+        const string& custkey = row.at(ordersIndex.at("o_custkey"));
+        const string& orderkey = row.at(ordersIndex.at("o_orderkey"));
+        const string& orderdate = row.at(ordersIndex.at("o_orderdate"));
+
         if (in_date_range(orderdate) && custkey_to_nationkey.count(custkey)) {
             valid_order_keys.insert(orderkey);
             orderkey_to_cust_nationkey[orderkey] = custkey_to_nationkey[custkey];
@@ -133,7 +167,7 @@ bool executeQuery5(const string& r_name, const string& start_date, const string&
     }
     log(LogLevel::INFO, "Orders in date range with valid customers: " + to_string(matched_orders));
 
-    // Join lineitem on l_orderkey = o_orderkey and l_suppkey = s_suppkey - i thought to parallelize this part
+    // Join lineitem on l_orderkey = o_orderkey and l_suppkey = s_suppkey, then calculate - i thought to parallelize this part
     mutex result_mutex;
     int processed_lines = 0;
     mutex count_mutex;
@@ -146,8 +180,8 @@ bool executeQuery5(const string& r_name, const string& start_date, const string&
 
         for (int i = start; i < end; ++i) {
             const auto& row = lineitem_data[i];
-            string orderkey = row.at("l_orderkey");
-            string suppkey = row.at("l_suppkey");
+            const string& orderkey = row.at(lineitemIndex.at("l_orderkey"));
+            const string& suppkey = row.at(lineitemIndex.at("l_suppkey"));
 
             if (!valid_order_keys.count(orderkey)) continue;
             if (!valid_supp_keys.count(suppkey)) continue;
@@ -155,8 +189,8 @@ bool executeQuery5(const string& r_name, const string& start_date, const string&
             string nationkey = orderkey_to_cust_nationkey[orderkey];
             string nation = nation_name_by_key[nationkey];
 
-            double extended_price = stod(row.at("l_extendedprice"));
-            double discount = stod(row.at("l_discount"));
+            double extended_price = stod(row.at(lineitemIndex.at("l_extendedprice")));
+            double discount = stod(row.at(lineitemIndex.at("l_discount")));
             double revenue = extended_price * (1 - discount);
 
             local_result[nation] += revenue;
@@ -251,7 +285,7 @@ vector<string> split(const string& s, char delimiter) {
 }
 
 // Helper: read a single TPCH table file
-bool readTable(const string& file_path, const vector<string>& columns, vector<map<string, string>>& data) {
+bool readTable(const string& file_path, const vector<string>& columns, vector<vector<string>>& data) {
     size_t max_size_bytes = 4096ULL * 1024 * 1024;
     size_t sample_limit = 30000; // number of rows to read in sample mode
 
@@ -287,17 +321,44 @@ bool readTable(const string& file_path, const vector<string>& columns, vector<ma
             continue;
         }
 
-        map<string, string> row;
-        for (size_t i = 0; i < columns.size(); ++i) {
-            row[columns[i]] = values[i];
-        }
-
-        data.push_back(move(row));
+        data.push_back(move(values));
         ++row_count;
 
         if (sample_mode && row_count >= sample_limit) break;
     }
 
     file.close();
+    return true;
+    
+}
+
+unordered_map<string, size_t> computeIndexMap(const vector<string>& columns) {
+    unordered_map<string, size_t> indexMap;
+    for (size_t i = 0; i < columns.size(); ++i) {
+        indexMap[columns[i]] = i;
+    }
+    return indexMap;
+};
+
+bool populateAllIndexMaps(
+    unordered_map<std::string, size_t>& regionIndex,
+    unordered_map<std::string, size_t>& nationIndex,
+    unordered_map<std::string, size_t>& supplierIndex,
+    unordered_map<std::string, size_t>& customerIndex,
+    unordered_map<std::string, size_t>& ordersIndex,
+    unordered_map<std::string, size_t>& lineitemIndex
+) {
+    try {
+        regionIndex   = computeIndexMap(REGION_COLS);
+        nationIndex   = computeIndexMap(NATION_COLS);
+        supplierIndex = computeIndexMap(SUPPLIER_COLS);
+        customerIndex = computeIndexMap(CUSTOMER_COLS);
+        ordersIndex   = computeIndexMap(ORDERS_COLS);
+        lineitemIndex = computeIndexMap(LINEITEM_COLS);
+        log(LogLevel::INFO, "Computed column index maps for all TPCH tables.");
+    } catch (const std::exception& ex) {
+        std::cerr << "Failed to compute column index maps: " << ex.what() << std::endl;
+        return false;
+    }
     return true;
 }

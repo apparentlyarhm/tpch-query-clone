@@ -40,6 +40,34 @@ Source: [tpch-dbgen answers/q5.out](https://github.com/electrum/tpch-dbgen/blob/
 
 **AVG Runtime:** 96 ms
 
+
+## Updated runs 
+
+### 4 Threads
+
+n_name                    |revenue
+INDONESIA                 |548006304.77
+CHINA                     |538243372.74
+JAPAN                     |525068963.42
+INDIA                     |524577848.91
+VIETNAM                   |524377067.47
+
+**AVG Runtime:** 4033 ms
+
+### 1 Thread
+
+n_name                    |revenue
+INDONESIA                 |548006304.77
+CHINA                     |538243372.74
+JAPAN                     |525068963.42
+INDIA                     |524577848.91
+VIETNAM                   |524377067.47
+
+**AVG Runtime:** 8687 ms
+
+
 ## Comments
 
-Yeah this will make a difference if the entire 1.4gbs worth of records were processed-- my CPU is fairly powerful
+[first impl] Yeah this will make a difference if the entire 1.4gbs worth of records were processed-- my CPU is fairly powerful
+
+[second impl] Since we load the entire data now, we see much closer results. 
