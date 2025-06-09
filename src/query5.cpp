@@ -252,7 +252,7 @@ vector<string> split(const string& s, char delimiter) {
 
 // Helper: read a single TPCH table file
 bool readTable(const string& file_path, const vector<string>& columns, vector<map<string, string>>& data) {
-    size_t max_size_bytes = 10 * 1024 * 1024; // 10 MB limit for loading into memory
+    size_t max_size_bytes = 4096ULL * 1024 * 1024;
     size_t sample_limit = 30000; // number of rows to read in sample mode
 
     ifstream file(file_path, ios::binary | ios::ate);
@@ -265,6 +265,7 @@ bool readTable(const string& file_path, const vector<string>& columns, vector<ma
     file.seekg(0, ios::beg); // reset position for reading
 
     bool sample_mode = false;
+    log(LogLevel::INFO, "Reading file: " + file_path + " (" + to_string(file_size) + " bytes)");
     if (file_size > static_cast<streamsize>(max_size_bytes)) {
         log(LogLevel::WARNING, "File too large to fully load: " + file_path +
                                " (" + to_string(file_size) + " bytes). Sampling first " +
