@@ -15,5 +15,13 @@ target_include_directories(tpch_query5 PRIVATE include)
 find_package(Threads REQUIRED)
 target_link_libraries(tpch_query5 PRIVATE Threads::Threads)
 
+
+# The second executable target for the alternative implementation
+add_executable(alt-build alt-src/alt-impl.cpp)
+
+# Include directories
+target_include_directories(alt-build PRIVATE alt-src/include)
+
+find_package(OpenMP REQUIRED)
 # Install target (optional)
 # install(TARGETS tpch_query5 DESTINATION bin) 

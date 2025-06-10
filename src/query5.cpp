@@ -87,14 +87,6 @@ bool executeQuery5(
 ) {    
     log(LogLevel::INFO, "Starting execution of TPCH Query 5");
 
-    for (const auto& col : REGION_COLS) {
-        std::cout << "REGION_COL: [" << col << "]\n";
-    }
-
-    for (const auto& [key, val] : regionIndex) {
-        std::cout << "regionIndex[" << key << "] = " << val << "\n";
-    }
-
     // r_name = <region>
     string target_region_key;
     for (const auto& row : region_data) {
@@ -153,6 +145,7 @@ bool executeQuery5(
         return date >= start_date && date < end_date;
     };
 
+
     int matched_orders = 0;
     for (const auto& row : orders_data) {
         const string& custkey = row.at(ordersIndex.at("o_custkey"));
@@ -169,8 +162,8 @@ bool executeQuery5(
 
     // Join lineitem on l_orderkey = o_orderkey and l_suppkey = s_suppkey, then calculate - i thought to parallelize this part
     mutex result_mutex;
-    int processed_lines = 0;
     mutex count_mutex;
+    int processed_lines = 0;
 
     auto worker = [&](int start, int end, int thread_id) {
         log(LogLevel::INFO, "Thread " + to_string(thread_id) + " processing from index " + to_string(start) + " to " + to_string(end));
@@ -197,7 +190,7 @@ bool executeQuery5(
             local_count++;
         }
         log(LogLevel::INFO, "Thread " + to_string(thread_id) + " finished with " + to_string(local_count) + " valid line items.");
-
+        
         // Merge into shared result
         {
             lock_guard<mutex> lock(result_mutex);
