@@ -22,6 +22,8 @@ Also, beacuse of limited time, I could not finish the indexes stuff, so in case 
 3. 10/6/25 [00:34] -- just by shifting to `vector<string>` instead of the given `map<string, string>` allowed the entire data to be fed into memory. Since the column names are supposed to be constant, we can improve the memory footprint from the original implementation (non running vs ~10Gigs). its still very large so the only correct way is streaming. If we were using Java or Rust here, its iterators would have proved useful here. The answer is still wrong but at least it all loads. 
 <b>I did, however, changed the function signatures and therefore the intitial state the assingment was given</b>
 
+4. 10/6/25 [17:45] -- turns out i had missed a join. the output matches now. Still didnt implement it the streaming way but have added an alternate approach -- mostly after discussion with a friend, who's a rust connoisseur, to basically have a rustified solution. Runs in similar time frame but has better memory footprint. I believe that in a real DBMS, the engine has to do some sort of data analysis and stuff as part of optimizations to run the query. 
+
 Original Readme below: 
 <hr>
 
