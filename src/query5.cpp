@@ -107,7 +107,7 @@ bool executeQuery5(
     for (const auto& row : nation_data) {
         if (row.at(nationIndex.at("n_regionkey")) == target_region_key) {
             string nation_key = row.at(nationIndex.at("n_nationkey"));
-            
+            log(LogLevel::INFO, "Found valid nation: " + row.at(nationIndex.at("n_name")) + " with key: " + nation_key);
             valid_nation_keys.insert(nation_key);
             nation_name_by_key[nation_key] = row.at(nationIndex.at("n_name"));
         }
@@ -138,14 +138,15 @@ bool executeQuery5(
     }
     log(LogLevel::INFO, "Customers from valid nations: " + to_string(custkey_to_nationkey.size()));
 
-    // Join orders on o_custkey = c_custkey and filter o_orderdate in range
-    unordered_set<string> valid_order_keys;
-    unordered_map<string, string> orderkey_to_cust_nationkey;
+    // Define a lambda to check if an order date is within the specified range
     auto in_date_range = [&](const string& date) {
         return date >= start_date && date < end_date;
     };
 
 
+    // Join orders on o_custkey = c_custkey and filter o_orderdate in range
+    unordered_set<string> valid_order_keys;
+    unordered_map<string, string> orderkey_to_cust_nationkey;
     int matched_orders = 0;
     for (const auto& row : orders_data) {
         const string& custkey = row.at(ordersIndex.at("o_custkey"));
@@ -165,6 +166,7 @@ bool executeQuery5(
     mutex count_mutex;
     int processed_lines = 0;
 
+    // define a worker function for processing lineitem data. this is a lambda function that will be executed by each thread. i dont really know if this is the best way to do it
     auto worker = [&](int start, int end, int thread_id) {
         log(LogLevel::INFO, "Thread " + to_string(thread_id) + " processing from index " + to_string(start) + " to " + to_string(end));
         
@@ -176,17 +178,40 @@ bool executeQuery5(
             const string& orderkey = row.at(lineitemIndex.at("l_orderkey"));
             const string& suppkey = row.at(lineitemIndex.at("l_suppkey"));
 
-            if (!valid_order_keys.count(orderkey)) continue;
-            if (!valid_supp_keys.count(suppkey)) continue;
+            // Hint: use git history to see the changes made in this function. It was wrong before, but now it is potentially correct.
 
-            string nationkey = orderkey_to_cust_nationkey[orderkey];
-            string nation = nation_name_by_key[nationkey];
+            // --- FIX PART 1: Safe access and getting BOTH nation keys ---
+
+            // Find the customer's nation key for this order
+            auto cust_nation_it = orderkey_to_cust_nationkey.find(orderkey);
+            if (cust_nation_it == orderkey_to_cust_nationkey.end()) {
+                continue; // Order not valid (wrong date or customer not in region)
+            }
+            const string& cust_nationkey = cust_nation_it->second;
+
+            // Find the supplier's nation key
+            auto supp_nation_it = suppkey_to_nationkey.find(suppkey);
+            if (supp_nation_it == suppkey_to_nationkey.end()) {
+                continue; // Supplier not in a valid nation
+            }
+            const string& supp_nationkey = supp_nation_it->second;
+
+            // --- FIX PART 2: THE CRITICAL LOGICAL CHECK ---
+            if (cust_nationkey != supp_nationkey) {
+                continue; // The customer and supplier are from different nations. Reject.
+            }
+
+            // --- If we get here, the lineitem is fully valid ---
+
+            // Now get the nation name using the key (cust_nationkey and supp_nationkey are the same)
+            // Using .at() here is safe because we know the key must exist from our initial setup.
+            const string& nation_name = nation_name_by_key.at(cust_nationkey);
 
             double extended_price = stod(row.at(lineitemIndex.at("l_extendedprice")));
             double discount = stod(row.at(lineitemIndex.at("l_discount")));
-            double revenue = extended_price * (1 - discount);
+            double revenue = extended_price * (1.0 - discount);
 
-            local_result[nation] += revenue;
+            local_result[nation_name] += revenue;
             local_count++;
         }
         log(LogLevel::INFO, "Thread " + to_string(thread_id) + " finished with " + to_string(local_count) + " valid line items.");
